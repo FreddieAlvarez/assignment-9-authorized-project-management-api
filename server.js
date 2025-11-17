@@ -62,7 +62,7 @@ testConnection();
 // POST /api/register - Register new user
 app.post('/api/register', async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, role = 'employee' } = req.body;
         
         // Check if user exists
         const existingUser = await User.findOne({ where: { email } });
@@ -77,17 +77,30 @@ app.post('/api/register', async (req, res) => {
         const newUser = await User.create({
             name,
             email,
-            password: hashedPassword
-            // TODO: Add role field
+            password: hashedPassword,
+            role
         });
+
+        const token = jwt.sign( 
+            { 
+                id: newUser.id, 
+                name: newUser.name, 
+                email: newUser.email,
+                role: newUser.role 
+            }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: process.env.JWT_EXPIRES_IN }
+        ); 
         
         res.status(201).json({
             message: 'User registered successfully',
             user: {
                 id: newUser.id,
                 name: newUser.name,
-                email: newUser.email
-            }
+                email: newUser.email,
+                role: newUser.role
+            },
+            token
         });
         
     } catch (error) {
@@ -115,7 +128,8 @@ app.post('/api/login', async (req, res) => {
             { 
                 id: user.id, 
                 name: user.name, 
-                email: user.email 
+                email: user.email,
+                role: user.role 
             }, 
             process.env.JWT_SECRET, 
             { expiresIn: process.env.JWT_EXPIRES_IN 
