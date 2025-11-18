@@ -60,7 +60,8 @@ function requireAuth(req, res, next) {
         req.user = {
             id: decoded.id,
             name: decoded.name,
-            email: decoded.email
+            email: decoded.email,
+            role: decoded.role
         };
         
         next();
@@ -205,7 +206,7 @@ app.get('/api/users/profile', requireAuth, async (req, res) => {
 });
 
 // GET /api/users - Get all users (TODO: Admin only)
-app.get('/api/users', requireAuth, async (req, res) => {
+app.get('/api/users', requireAuth, requireAdmin, async (req, res) => {
     try {
         const users = await User.findAll({
             attributes: ['id', 'name', 'email'] // Don't return passwords
@@ -275,7 +276,7 @@ app.get('/api/projects/:id', requireAuth, async (req, res) => {
 });
 
 // POST /api/projects - Create new project (TODO: Manager+ only)
-app.post('/api/projects', requireAuth, async (req, res) => {
+app.post('/api/projects', requireAuth, requireManager, async (req, res) => {
     try {
         const { name, description, status = 'active' } = req.body;
         
@@ -294,7 +295,7 @@ app.post('/api/projects', requireAuth, async (req, res) => {
 });
 
 // PUT /api/projects/:id - Update project (TODO: Manager+ only)
-app.put('/api/projects/:id', requireAuth, async (req, res) => {
+app.put('/api/projects/:id', requireAuth, requireManager, async (req, res) => {
     try {
         const { name, description, status } = req.body;
         
@@ -316,7 +317,7 @@ app.put('/api/projects/:id', requireAuth, async (req, res) => {
 });
 
 // DELETE /api/projects/:id - Delete project (TODO: Admin only)
-app.delete('/api/projects/:id', requireAuth, async (req, res) => {
+app.delete('/api/projects/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const deletedRowsCount = await Project.destroy({
             where: { id: req.params.id }
@@ -357,7 +358,7 @@ app.get('/api/projects/:id/tasks', requireAuth, async (req, res) => {
 });
 
 // POST /api/projects/:id/tasks - Create task (TODO: Manager+ only)
-app.post('/api/projects/:id/tasks', requireAuth, async (req, res) => {
+app.post('/api/projects/:id/tasks', requireAuth, requireManager, async (req, res) => {
     try {
         const { title, description, assignedUserId, priority = 'medium' } = req.body;
         
@@ -400,7 +401,7 @@ app.put('/api/tasks/:id', requireAuth, async (req, res) => {
 });
 
 // DELETE /api/tasks/:id - Delete task (TODO: Manager+ only)
-app.delete('/api/tasks/:id', requireAuth, async (req, res) => {
+app.delete('/api/tasks/:id', requireAuth, requireManager, async (req, res) => {
     try {
         const deletedRowsCount = await Task.destroy({
             where: { id: req.params.id }
